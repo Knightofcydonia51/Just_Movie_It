@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% load bootstrap4 %}
+{% block body %}
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-8">
+        
+        <form action="" method="POST">
+        {% csrf_token %}
+        {% bootstrap_form form layout='horizontal' %}
+        {% buttons submit="영화 등록하기" %}
+        {% endbuttons %}
+        
+      </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}

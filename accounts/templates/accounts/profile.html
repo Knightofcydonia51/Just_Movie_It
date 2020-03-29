@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+
+{% block body %}
+
+
+
+
+  <div class="container text-center">
+    
+    <div class="row justify-content-center text-center">
+      <h2 class="col-12">{{ profile_user }}</h2>
+      <p class="col-12">{{ profile_user.profile }}</p>
+      {% if user == profile_user %}
+        <form action="{% url 'accounts:update_profile' profile_user.id %}" method="POST">
+          {% csrf_token %}
+          <input type="text" name="profile">
+          <input type="submit" value="프로필 수정하기">
+        </form>
+      {% endif %}
+      <hr>
+    </div>
+
+
+
+    
+    <div class="row justify-content-center">
+      <p class="col-12">{{ profile_user }}님이 좋아요 한 영화들</p><br>
+      {% for movie in like_movies %}
+        <div class="card col-8 col-sm-6 col-md-4 col-lg-3 p-1 {% if user in movie.like_users.all %}
+        myborder
+        {% endif %}"
+        id="like-movie-{{ movie.pk }}"
+        style="width: 18rem; background-color: rgba(0, 0, 0, 0)">
+          <a href="{% url 'movies:detail' movie.id %}"><img src="{{movie.poster_url}}" alt="..."></a>
+          <div class="card-body">
+            <h5 class="card-title">{{ movie.title }}</h5>
+            <p>관객 수: {{ movie.audience }}</p>
+            <p>평점: {{ movie.movie_score }}</p>
+            <a href="{% url 'movies:detail' movie.pk %}">상세 페이지로</a><br>
+            <span id="like-count-{{ movie.pk }}" class="card-text">{% if movie.like_users.count >= 2 %}{{ movie.like_users.all.0}}외 {{ movie.like_users.count|add:-1 }}명이 이 영화를 좋아합니다.{% elif movie.like_users.count == 1 %}{{ movie.like_users.all.0}}님이 이 영화를 좋아합니다.{% else %}현재 이 영화를 좋아하는 사람이 없습니다.{% endif %}</span><br>
+            <i class="{% if user in movie.like_users.all %}
+            fas
+            {% else %}
+            far
+            {% endif %} fa-heart like-button"
+            data-id="{{ movie.pk }}"
+            style="color: #f2780c;">
+            좋아요
+            </i>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+    <hr>
+    <a href="{% url 'accounts:like_movies' profile_user.id %}"><button type="button" class="btn btn-light">더 보러 가기</button></a>
+
+
+
+    <hr>
+    {{ profile_user }}님이 팔로우 하고 있는 유저들<br>
+    {% for follow in follows %}
+      {{follow}}
+      {% if user != follow %}
+        <i class="{% if user in follow.followers.all %}
+        fas
+        {% else %}
+        far
+        {% endif %} fa-star follow-button"
+        data-userId="{{ follow.id }}"
+        style="color: yellow;">
+        팔로우
+        </i>
+      {% endif %}
+      <br>
+    {% empty %}
+      <p>이 유저가 팔로우중인 유저가 없습니다.</p>
+    {% endfor %}    
+    <a href="{% url 'accounts:follows' profile_user.id %}"><button type="button" class="btn btn-light">더 보러 가기</button></a>
+    <hr>
+
+
+    
+    {{ profile_user }}님을 팔로우 하고 있는 유저들 <br>
+    {% for follower in followers %}
+      {{follower}}
+      {% if user != follower %}
+        <i class="{% if user in follower.followers.all %}
+        fas
+        {% else %}
+        far
+        {% endif %} fa-star follow-button"
+        data-userId="{{ follower.id }}"
+        style="color: yellow;">
+        팔로우
+        </i>
+      {% endif %}
+      <br>
+    {% empty %}
+      <p>이 유저를 팔로우 하고 있는 유저가 없습니다.</p>
+    {% endfor %}    
+    <a href="{% url 'accounts:followers' profile_user.id %}"><button type="button" class="btn btn-light">더 보러 가기</button></a>
+    <hr>
+    <a href="{% url 'accounts:reviews' profile_user.id %}"><button type="button" class="btn btn-light">{{ profile_user }}님이 작성한 리뷰들 보러 가기</button></a><hr>
+  </div>
+
+  <script>
+    const likeButtons = document.querySelectorAll('.like-button')
+    likeButtons.forEach(button => {
+      button.addEventListener('click', function(event) {
+        const movieId = event.target.dataset.id
+        axios.defaults.headers.common['X-Requested-With'] = "XMLHttpRequest"
+        axios.defaults.xsrfCookieName = 'csrftoken'
+        axios.defaults.xsrfHeaderName = 'X-CSRFToken'
+        axios.post(`/movies/like/${movieId}/`)
+        .then(response => {
+          document.querySelector(`#like-count-${movieId}`).innerText = response.data.text
+          if (!response.data.liked) {    
+            event.target.classList.remove('fas')
+            event.target.classList.add('far')
+            event.target.innerText=" 좋아요"
+            document.querySelector(`#like-movie-${movieId}`).classList.remove('myborder')
+          } else{                    
+            event.target.classList.remove('far')
+            event.target.classList.add('fas')
+            event.target.innerText=" 좋아요"
+            document.querySelector(`#like-movie-${movieId}`).classList.add('myborder')
+          }
+        })
+        .catch(error => console.log(error))
+      })
+    })
+  </script>
+
+
+
+
+
+  <script>
+    const followButtons = document.querySelectorAll('.follow-button')
+    followButtons.forEach(button => {
+      button.addEventListener('click', function(event) {
+        const userId = event.target.dataset.userid
+        axios.defaults.headers.common['X-Requested-With'] = "XMLHttpRequest"
+        axios.defaults.xsrfCookieName = 'csrftoken'
+        axios.defaults.xsrfHeaderName = 'X-CSRFToken'
+        axios.post(`/accounts/follow/${userId}/`)
+        .then(response => {
+          console.log(response)
+          if (response.data.followed) {
+            event.target.classList.remove('far')
+            event.target.classList.add('fas')
+            event.target.innerText=" 팔로우"
+          } else{                        
+            event.target.classList.remove('fas')
+            event.target.classList.add('far')
+            event.target.innerText=" 팔로우"
+          }
+        })
+        .catch(error => console.log(error))
+      })
+    })
+  </script>
+
+
+
+
+
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+
+{% block body %}
+<div class="container">
+  <a href="{% url 'movies:create' %}"><button type="button" class="btn btn-light">영화 추가하기</button></a><br>
+  {% for movie in movies %}
+  <a href="{% url 'movies:detail' movie.id %}">{{ movie.title }}</a><br>
+  
+  {% endfor %}
+</div>
+
+{% endblock %}
+
+
+

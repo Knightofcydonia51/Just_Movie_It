@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block body %}
+<div class="container">
+    {{ profile_user }}가 팔로우 하고 있는 유저들<br>
+    <div class="row justify-content-center">
+  {% for follow in follows %}
+    <br>{{follow}}
+    {% if user != follow %}
+      <i class="{% if user in follow.followers.all %}
+      fas
+      {% else %}
+      far
+      {% endif %} fa-star follow-button"
+      data-userId="{{ follow.id }}"
+      style="color: yellow;">
+      팔로우
+      </i>
+    {% endif %}
+    <hr>
+  {% empty %}
+    <p>이 유저가 팔로우중인 유저가 없습니다.</p>
+  {% endfor %}
+  <hr class='col-12'>
+  <a href="{% url 'accounts:profile' profile_user.id %}"><button type="button" class="btn btn-light">이전 페이지로</button></a>
+  <hr class='col-12'>
+
+</div>
+</div>
+  <script>
+    const followButtons = document.querySelectorAll('.follow-button')
+    followButtons.forEach(button => {
+      button.addEventListener('click', function(event) {
+        const userId = event.target.dataset.userid
+        axios.defaults.headers.common['X-Requested-With'] = "XMLHttpRequest"
+        axios.defaults.xsrfCookieName = 'csrftoken'
+        axios.defaults.xsrfHeaderName = 'X-CSRFToken'
+        axios.post(`/accounts/follow/${userId}/`)
+        .then(response => {
+          if (response.data.followed) {
+            event.target.classList.remove('far')
+            event.target.classList.add('fas')
+            event.target.innerText=" 팔로우"
+          } else{                        
+            event.target.classList.remove('fas')
+            event.target.classList.add('far')
+            event.target.innerText=" 팔로우"
+          }
+        })
+        .catch(error => console.log(error))
+      })
+    })
+  </script>
+
+
+{% endblock %}

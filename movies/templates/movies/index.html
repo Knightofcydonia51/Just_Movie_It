@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% block body%}
+  {% if user.is_authenticated %}
+    <div class="container">
+        <h4 class="display-4">추천하는 장르는 {{ like_genre }} 입니다!</h4>
+      <div class="row">
+        <p class="ml-3 lead">해당 장르 중 인기가 많은 영화를 추천해 드립니다.</p>
+        <div class="jumbotron col-12 col-lg-8 text-center" style="color:black; background-color:rgba(255, 255, 255, 0.0);">
+          
+          <h4 class="recommend_title">{{ like_genre_movie.title }}</h4><br>
+          <a href="{% url 'movies:detail' like_genre_movie.id %}"><img src="{{like_genre_movie.poster_url}}" class="col-12" alt="" style="width: 800px;"></a>
+        </div>
+        <div class="jumbotron col-12 col-lg-4" style="color:white; background-color:rgba(150, 150, 150,0.0);">
+          <br><br><br><br>
+          <p >{{ like_genre_movie.description }}</p>
+          <p>관객 수: {{ like_genre_movie.audience }}</p>
+          <p>평점: {{ like_genre_movie.movie_score }}</p>
+          <span id="like-count-{{ like_genre_movie.pk }}" class="card-text">{% if like_genre_movie.like_users.count >= 2 %}{{ like_genre_movie.like_users.all.0}}외 {{ like_genre_movie.like_users.count|add:-1 }}명이 이 영화를 좋아합니다.{% elif like_genre_movie.like_users.count == 1 %}{{ like_genre_movie.like_users.all.0}}님이 이 영화를 좋아합니다.{% else %}현재 이 영화를 좋아하는 사람이 없습니다.{% endif %}</span><br>
+          <i class="{% if user in like_genre_movie.like_users.all %}
+          fas
+          {% else %}
+          far
+          {% endif %} fa-heart like-button"
+          data-id="{{ like_genre_movie.pk }}"
+          style="color: #f2780c;">
+          좋아요
+          </i>
+        </div>
+        <hr>
+      </div>
+      
+      <div class="row d-flex flex-row-reverse">
+        <a href="{% url 'movies:more_recommend' user.id %}"><button type="button" class="btn btn-light">더 많은 추천영화 보러 가기</button></a>
+      </div><hr>
+      
+      <hr>
+      <div class="row justify-content-center">
+        {% for movie in movies %}
+          {% if movie != like_genre_movie %}
+          <div class="card col-8 col-sm-6 col-md-4 col-lg-3 p-1 {% if user in movie.like_users.all %}
+          myborder
+          {% endif %}"
+          id="like-movie-{{ movie.pk }}"
+          style="width: 18rem; background-color: rgba(0, 0, 0, 0)">
+            <a href="{% url 'movies:detail' movie.id %}"><img src="{{movie.poster_url}}" alt="..."></a>
+            <div class="card-body">
+              <h5 class="card-title">{{ movie.title }}</h5>
+              <p>관객 수: {{ movie.audience }}</p>
+              <p>평점: {{ movie.movie_score }}</p>
+              <a href="{% url 'movies:detail' movie.pk %}">상세 페이지로</a><br>
+              <span id="like-count-{{ movie.pk }}" class="card-text">{% if movie.like_users.count >= 2 %}{{ movie.like_users.all.0}}외 {{ movie.like_users.count|add:-1 }}명이 이 영화를 좋아합니다.{% elif movie.like_users.count == 1 %}{{ movie.like_users.all.0}}님이 이 영화를 좋아합니다.{% else %}현재 이 영화를 좋아하는 사람이 없습니다.{% endif %}</span><br>
+              <i class="{% if user in movie.like_users.all %}
+              fas
+              {% else %}
+              far
+              {% endif %} fa-heart like-button"
+              data-id="{{ movie.pk }}"
+              style="color: #f2780c;">
+              좋아요
+              </i>
+            </div>
+          </div>
+          {% endif %}
+          
+        {% endfor %}
+      </div>
+    </div>
+  {% else %}
+    <h2 class="text-center my-5" style="color:white">로그인 한 유저만 추천 서비스를 이용할 수 있습니다.</h2>
+  {% endif %}
+  <hr>
+
+  <script>
+    const likeButtons = document.querySelectorAll('.like-button')
+    likeButtons.forEach(button => {
+      button.addEventListener('click', function(event) {
+        const movieId = event.target.dataset.id
+        axios.defaults.headers.common['X-Requested-With'] = "XMLHttpRequest"
+        axios.defaults.xsrfCookieName = 'csrftoken'
+        axios.defaults.xsrfHeaderName = 'X-CSRFToken'
+        axios.post(`/movies/like/${movieId}/`)
+        .then(response => {
+          document.querySelector(`#like-count-${movieId}`).innerText = response.data.text
+          if (!response.data.liked) {    
+            event.target.classList.remove('fas')
+            event.target.classList.add('far')
+            event.target.innerText=" 좋아요"
+            document.querySelector(`#like-movie-${movieId}`).classList.remove('myborder')
+          } else{                    
+            event.target.classList.remove('far')
+            event.target.classList.add('fas')
+            event.target.innerText=" 좋아요"
+            document.querySelector(`#like-movie-${movieId}`).classList.add('myborder')
+          }
+        })
+        .catch(error => console.log(error))
+      })
+    })
+  </script>
+  <style>
+  .recommend_title{
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 2.5rem;
+    color:white;
+  }
+
+  </style>
+{% endblock %}

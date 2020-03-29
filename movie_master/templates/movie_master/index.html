@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block body %}
+
+<hr>
+<div class="container mt-5">
+<div class="d-flex justify-content-around align-items-center mt-3" style="height: 300px;">
+  <a href="{% url 'accounts:index'%}"><button type="button" class="btn btn-light">유저 관리로 이동</button></a>
+  <a href="{% url 'movies:master_index'%}"><button type="button" class="btn btn-light">영화 관리로 이동</button></a>
+  <a href="{% url 'movie_master:getdata' %}"><button type="button" class="btn btn-light">데이터 입력 받기</button></a>
+</div>
+</div>
+{% endblock %}

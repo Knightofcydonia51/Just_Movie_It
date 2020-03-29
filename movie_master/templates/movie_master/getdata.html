@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block body %}
+<div class="container">
+  <div class="row text-center justify-content-center">
+    <form action="{% url 'movies:getdata' %}" method="POST">
+      {% csrf_token %}
+      <p>시작일: <input type="text" name="dateFrom" id="" placeholder="ex)20190101"></p>
+      <p>종료일: <input type="text" name="dateTo" id="" placeholder="ex)20190101"></p>
+      <p>날짜 입력 예시</p>
+      <p>2019년 11월 1일 ~ 2019년 11월 27일에 해당하는 데이터를 가져오고 싶으면<br> 시작일에 20191101, 종료일에 20191127를 입력하세요</p> 
+      <input type="submit" value="데이터 수집하기">
+    </form>
+  </div>
+</div>
+
+
+{% endblock %}

@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% load bootstrap4 %}
+{% block body %}
+  <div class="container">
+    <h2>{{ movie.title }}</h2>
+    <div class="row my-5">
+      <div class="col-8"><img src="{{movie.poster_url}}" alt=""></div>
+      <div class="col-4">
+        <p>{{ movie.description }}</p>
+        <p>관객 수: {{ movie.audience }}</p>
+        <p>평점: {{ movie.movie_score }}</p>
+        <span id="like-count" class="card-text">{% if movie.like_users.count >= 2 %}{{ movie.like_users.all.0}}외 {{ movie.like_users.count|add:-1 }}명이 이 영화를 좋아합니다.{% elif movie.like_users.count == 1 %}{{ movie.like_users.all.0}}님이 이 영화를 좋아합니다.{% else %}현재 이 영화를 좋아하는 사람이 없습니다.{% endif %}</span><br>
+        <i class="{% if user in movie.like_users.all %}
+        fas
+        {% else %}
+        far
+        {% endif %} fa-heart like-button"
+        data-id="{{ movie.pk }}"
+        style="color: crimson;">
+        좋아요
+        </i>
+      </div>
+    </div>
+    
+    <p><b>사용자 리뷰</b></p>
+    {% for review in reviews %}
+      <a href="{% url 'accounts:profile' review.user.id %}" tabindex="-1" aria-disabled="true">작성자 : {{ review.user }}</a>
+      {% if user != review.user %}
+        <i class="{% if user in review.user.followers.all %}
+        fas
+        {% else %}
+        far
+        {% endif %} fa-star follow-button"
+        data-userId="{{ review.user_id }}"
+        style="color: yellow;">
+        팔로우
+        </i>
+      {% endif %}
+      <br>평점 : {{ review.score }}<br>
+      내용 :{{review.content}}<br>
+      {% if request.user == review.user %}     
+        <form action="{% url 'movies:review_delete' movie.pk review.pk %}" method="POST">
+            {% csrf_token %}
+            <input class="btn btn-danger" type="submit" value="댓글 삭제">
+        </form>
+        
+        <div class="row ml-5">
+          <form action="{% url 'movies:review_update' movie.pk review.pk %}" method="POST">
+            <p>댓글 수정하기</p>
+            {% csrf_token %}
+            {% bootstrap_form review_form layout='horizontal' %}
+            <class="">{% buttons submit="리뷰 수정하기" %}
+            {% endbuttons %}
+          </form>
+        </div>
+      {% endif %}
+      <hr>
+    {% empty %}
+    <p>작성된 리뷰가 없습니다.</p>
+    {% endfor %}
+    <div class="row">
+      {% if user.is_authenticated %}
+        {% if not writed %}
+
+        <div class="row justify-content-center">
+          <form action="{% url 'movies:review_create' movie.pk %}" method="POST">
+            {% csrf_token %}
+            {% bootstrap_form review_form layout='horizontal' %}
+            <class="">{% buttons submit="리뷰 작성하기" %}
+            {% endbuttons %}
+          </form>
+        </div>
+        {% endif %}
+      {% endif %}
+    </div>
+    <div class="row">
+      {% if user.is_superuser %}
+        <a class="mx-1" href="{% url 'movies:update' movie.id %}">영화 수정</a>
+        <a class="mx-1" href="{% url 'movies:delete' movie.id %}">영화 삭제</a>
+        <a class="mx-1" href="{% url 'movies:master_index' %}">관리자 영화 목록으로</a>
+      {% endif %}
+    </div>
+    
+    
+  </div>
+  <script>
+    const likeButton = document.querySelector('.like-button')
+    likeButton.addEventListener('click', function(event){
+      const movieId = event.target.dataset.id
+      axios.defaults.headers.common['X-Requested-With'] = "XMLHttpRequest"
+        axios.defaults.xsrfCookieName = 'csrftoken'
+        axios.defaults.xsrfHeaderName = 'X-CSRFToken'
+        axios.post(`/movies/like/${movieId}/`)
+        .then(response => {
+          document.querySelector('#like-count').innerText = response.data.text
+          if (!response.data.liked) {    
+            event.target.classList.remove('fas')
+            event.target.classList.add('far')
+            event.target.innerText=" 좋아요"
+            document.querySelector(`#like-movie-${movieId}`).classList.remove('border')
+            document.querySelector(`#like-movie-${movieId}`).classList.remove('border-primary')
+          } else{                    
+            event.target.classList.remove('far')
+            event.target.classList.add('fas')
+            event.target.innerText=" 좋아요"
+            document.querySelector(`#like-movie-${movieId}`).classList.add('border')
+            document.querySelector(`#like-movie-${movieId}`).classList.add('border-primary')
+          }
+        })
+        .catch(error => console.log(error))
+    })
+
+
+
+
+    const followButtons = document.querySelectorAll('.follow-button')
+    followButtons.forEach(button => {
+      button.addEventListener('click', function(event) {
+        const userId = event.target.dataset.userid
+        axios.defaults.headers.common['X-Requested-With'] = "XMLHttpRequest"
+        axios.defaults.xsrfCookieName = 'csrftoken'
+        axios.defaults.xsrfHeaderName = 'X-CSRFToken'
+        axios.post(`/accounts/follow/${userId}/`)
+        .then(response => {
+          console.log(response)
+          if (response.data.followed) {
+            event.target.classList.remove('far')
+            event.target.classList.add('fas')
+            event.target.innerText=" 팔로우"
+          } else{                        
+            event.target.classList.remove('fas')
+            event.target.classList.add('far')
+            event.target.innerText=" 팔로우"
+          }
+        })
+        .catch(error => console.log(error))
+      })
+    })
+  </script>
+{% endblock %}
